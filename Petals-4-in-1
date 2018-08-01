@@ -1,0 +1,240 @@
+/* Shama Khalil, 01-08-2018
+ *  Code for design project Petals, an interactive music visualizer, desiged
+ *  to give music listeners an enhanced music listening experience through
+ *  making a visual match a song using through manipulation of the below
+ *  listed four parameters of the visual:
+ *
+ *    Shape change: values[0]
+ *    Size change: values[1]
+ *    Color change: values[2]
+ *    Speed of rotation: values[3] 
+ *
+ *  These parameters can be manipulated through rotating four rotary potentiometers.
+ *  The above listed parameters are each dependent on the values of one
+ *  of these potentiometers. Arduino is used to read in value changes of the 
+ *  potentiometers and change the parameters of the visual, leading to a change 
+ *  in size, color, shape, and motion speed.
+*/
+import processing.serial.*;
+
+// Global vars for Arduino
+Serial myPort;  // Create object from Serial class
+int numValues = 16;     // number input values from arduino
+float[] values = new float[numValues];
+int transparency = 40;
+
+// Global vars for shape variation
+float numRotations1;
+float numRotations2;
+float numRotations3;
+float numRotations4;
+
+// Global vars for size variation
+float size1;
+float size2;
+float size3;
+float size4;
+
+// Global vars for speed variation
+float speed1;
+float speed2;
+float speed3;
+float speed4;
+
+// Global vars for changeColor() function
+color objectColor1;
+color objectColor2;
+color objectColor3;
+color objectColor4;
+
+color backgroundColor;
+
+void setup() {
+  fullScreen(P3D);
+  noStroke();
+  // value for size of petal
+  size1 = 1;
+  numRotations1 = 0;
+  objectColor1 = color(0,50,100,40); 
+
+  String portName = Serial.list()[0];
+  myPort = new Serial(this, portName, 9600);
+  // serialEvents() are only generated if a newline character has been read
+  myPort.bufferUntil('\n');
+  
+  // use HSB to make sure colors never clash
+  colorMode(HSB,100,100,100);
+}
+
+int cnt1 = 0;
+int cnt2 = 0;
+int cnt3 = 0;
+int cnt4 = 0;
+
+void draw() {
+  // Voor extra effect ding
+  //if (millis() % 1200000 == 0) {
+  //  backgroundColor = color(0,0,0);
+  //  noFill();
+  //} else {
+  //  stroke(0);
+  //}
+  
+  background(0,0,0);
+  
+  // if all values from the newline have successfully been received from Arduino
+  if (values.length >= numValues) {  
+    changeSize();
+    changeSpeed();
+    changeShape();
+    changeColor();
+  }
+  
+  // Bottom Right
+  pushMatrix();
+    //if (millis() % 1200000 == 0) {
+    //  stroke(objectColor1);
+    //} else {
+    //  stroke(0);
+    //}
+    cnt1+=speed1;
+    translate(width - 550, height - 300, -400);
+    fill(objectColor1);
+    for (int q = 0; q < 360; q+=30) {
+      // Manipulate the spread of the petals, leading to a shapechange
+      rotate(radians(numRotations1));
+      beginShape();
+      for (int i = -90; i <= 90; i+=3) {
+        // default value for angle
+        float angle = sin(radians(90+i))*size1;
+        float x = sin(radians(i*3+cnt1))*(angle);
+        float y = -i*2;
+        vertex(x, y);
+      }
+      endShape();
+    }
+  popMatrix();
+  
+  // Bottom Left?
+  pushMatrix();
+    cnt2 += speed2;
+    fill(objectColor2);
+    translate(width - 250, 300, -400);
+    for (int q = 0; q < 360; q+=30) {
+      // Manipulate the spread of the petals, leading to a shapechange
+      rotate(radians(numRotations2));
+      beginShape();
+      for (int i = -90; i <= 90; i+=3) {
+        // default value for angle 
+        float angle = sin(radians(90+i))*size2;
+        float x = sin(radians(i*3+cnt2))*(angle);
+        float y = -i*2;
+        vertex(x, y);
+      }
+      endShape();
+    }
+  popMatrix();
+  
+  // Top right?
+  pushMatrix();
+    cnt3 += speed3;
+    fill(objectColor3);
+    translate(250, height - 300, -400);
+    for (int q = 0; q < 360; q+=30) {
+      // Manipulate the spread of the petals, leading to a shapechange
+      rotate(radians(numRotations3));
+      beginShape();
+      for (int i = -90; i <= 90; i+=3) {
+        // default value for angle 
+        float angle = sin(radians(90+i))*size3;
+        float x = sin(radians(i*3+cnt3))*(angle);
+        float y = -i*2;
+        vertex(x, y);
+      }
+      endShape();
+    }
+  popMatrix();
+  
+  // Bottom right
+  pushMatrix();
+    cnt4 += speed4;
+    fill(objectColor4);
+    translate(550, 300, -400);
+    for (int q = 0; q < 360; q+=30) {
+      // Manipulate the spread of the petals, leading to a shapechange
+      rotate(radians(numRotations4));
+      beginShape();
+      for (int i = -90; i <= 90; i+=3) {
+        // default value for angle 
+        float angle = sin(radians(90+i))*size4;
+        float x = sin(radians(i*3+cnt4))*(angle);
+        float y = -i*2;
+        vertex(x, y);
+      }
+      endShape();
+    }
+  popMatrix();
+  ++cnt1;
+  ++cnt2;
+  ++cnt3;
+  ++cnt4;
+}
+
+
+void changeSize() {
+  size1 = values[2];
+  size2 = values[6];
+  size3 = values[10];
+  size4 = values[14];
+}
+
+void changeSpeed() {
+  speed1 = values[1]/20.;
+  speed2 = values[5]/20.;
+  speed3 = values[9]/20.;
+  speed4 = values[13]/20.;
+}
+
+void changeShape() {
+  numRotations1 = values[0]/65.;
+  numRotations2 = values[4]/65.;
+  numRotations3 = values[8]/65.;
+  numRotations4 = values[12]/65.;
+}
+
+void changeColor() {
+  objectColor1 = color((int)map(values[3],0,1024,0,100),50,100,40);
+  objectColor2 = color((int)map(values[7],0,1024,0,100),50,100,40);
+  objectColor3 = color((int)map(values[11],0,1024,0,100),50,100,40);
+  objectColor4 = color((int)map(values[15],0,1024,0,100),50,100,40);
+  
+  backgroundColor = color((int)map(values[2],0,1024,0,100),50,100,40);
+
+}
+
+
+void serialEvent(Serial myPort) { 
+  try {
+    // Read data from arduino Serial
+    String inString = myPort.readStringUntil('\n');
+    // println("raw: \t" + inString); // <- uncomment this to debug serial input from Arduino
+    if (inString != null) {
+
+      // trim off any whitespace:
+      inString = trim(inString);
+
+      // split the string on the delimiters and convert the resulting substrings into an float array:
+      values = float(splitTokens(inString, ", \t")); // delimiter can be comma space or tab
+      
+      // if the array has at least the # of elements as your # of sensors, you know
+      //   you got the whole data packet.
+      if (values.length >= numValues) {
+        //println(values[0] + ", " + values[1] + ", " + values[2]);
+      }
+    }
+  }
+  catch(RuntimeException e) {
+    // only if there is an error:
+    e.printStackTrace();
+  }
+}
